@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import careerBooks from "./careerBooks";
+import { API_BASE } from "../api";
 
 const Resources = () => {
   const [activeTab, setActiveTab] = useState("Youtube");
@@ -61,7 +62,7 @@ const Resources = () => {
     const content = document.getElementById("notes-editor").innerHTML;
   
     try {
-      await fetch("http://localhost:5000/save-notes", {
+      await fetch(`${API_BASE}/save-notes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -78,7 +79,7 @@ const Resources = () => {
 
   const fetchNotes = async () => {
     try {
-      const res = await fetch("http://localhost:5000/get-notes");
+      const res = await fetch(`${API_BASE}/get-notes`);
       const data = await res.json();
       setSavedNotes(data);
     } catch (err) {
