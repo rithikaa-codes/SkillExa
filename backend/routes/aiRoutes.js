@@ -25,10 +25,9 @@ router.post("/chat", async (req, res) => {
       return res.json({ reply: "You're very welcome! Let me know if you need any more career guidance. Build on! 🚀" });
     }
 
-    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "your_key_here") {
-
+    if (!process.env.GROQ_API_KEY) {
       return res.json({
-        reply: "⚠️ AI Core Offline: Missing OPENAI_API_KEY. Add it to your .env file to enable live career architecting."
+        reply: "⚠️ AI Core Offline: Missing GROQ_API_KEY. Add it to your configuration to enable live career architecting."
       });
     }
 
@@ -38,19 +37,17 @@ router.post("/chat", async (req, res) => {
       baseURL: "https://api.groq.com/openai/v1",
     });
 
+    console.log("Cognitive Coach received message:", message);
+
     const response = await client.chat.completions.create({
       model: "llama-3.3-70b-versatile",
       messages: [
         {
           role: "system",
           content: `You are an elite SkillExa Cognitive Coach.
-                    - If the user says something casual (hi, hello, how are you, thank you, ok), respond naturally, briefly, and professionally like a human.
-                    - Provide high-quality career advice for ANY field the user asks about (e.g., Fashion, Engineering, Medicine, etc.).
-                    - If the user asks for a career-related query (roadmap, skills, etc), provide the structured output:
-                    1. Career Suggestion
-                    2. Required Skills
-                    3. Step-by-Step Roadmap
-                    4. Resources.`
+                    - Respond naturally and professionally.
+                    - Provide career advice for ANY field.
+                    - Use structured output for pathways: 1. Suggestion, 2. Skills, 3. Roadmap, 4. Resources.`
         },
         {
           role: "user",
@@ -58,6 +55,8 @@ router.post("/chat", async (req, res) => {
         }
       ]
     });
+
+    console.log("Cognitive Coach response synthesized.");
 
 
     // 4. Return structured response
