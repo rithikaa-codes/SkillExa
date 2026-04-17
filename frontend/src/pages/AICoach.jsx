@@ -69,9 +69,9 @@ const AICoach = () => {
       gap: '24px'
     }}>
       <header style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '24px' }}>
-         <span className="roadmap-label">AI CAREER ARCHITECT</span>
-         <h2 className="hero-title" style={{ fontSize: '2.5rem', background: 'none', webkitTextFillColor: '#fff', margin: '8px 0' }}>Neural Coach</h2>
-         <p className="hero-lead" style={{ fontSize: '1rem', opacity: 0.6, margin: 0 }}>Interactive vocational intelligence modeling powered by OpenAI.</p>
+         <span className="roadmap-label">COGNITIVE INTELLIGENCE SUITE</span>
+         <h2 className="hero-title" style={{ fontSize: '3rem', background: 'none', webkitTextFillColor: '#fff', margin: '8px 0' }}>Cognitive Coach</h2>
+         <p className="hero-lead" style={{ fontSize: '1rem', opacity: 0.6, margin: 0 }}>Advanced vocational mentoring powered by frontier AI architectures.</p>
       </header>
 
       {/* Chat History Area */}
@@ -100,9 +100,7 @@ const AICoach = () => {
                 whiteSpace: 'pre-wrap'
               }}
             >
-              <span className="roadmap-label" style={{ fontSize: '0.6rem', opacity: 0.4, marginBottom: '8px', display: 'block' }}>
-                {msg.role === 'user' ? 'USER_PROMPT' : 'SKILLEXA_AI_RESPONSE'}
-              </span>
+
               <p style={{ margin: 0, lineHeight: '1.7', fontSize: '1rem', color: msg.role === 'user' ? '#fff' : 'rgba(255,255,255,0.9)' }}>
                 {msg.content}
               </p>

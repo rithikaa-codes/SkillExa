@@ -1,21 +1,45 @@
 import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { API_BASE } from "../api";
 
 const MockTest = () => {
   const [testActive, setTestActive] = useState(false);
   const [score, setScore] = useState(null);
-  const [timeRemaining, setTimeRemaining] = useState(600); // 10 min
+  const [timeRemaining, setTimeRemaining] = useState(600);
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState({});
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedRole, setSelectedRole] = useState(localStorage.getItem("selectedRole") || "");
 
-  const questions = [
-    { text: "What architectural pattern is most effective for ultra-high-scale real-time telemetry?", options: ["Microservices", "Event-Driven", "Monolith", "Serverless Functions"], correct: 1 },
-    { text: "Which principle focuses on minimizing cognitive load for new users in a complex SaaS?", options: ["Visual Hierarchy", "Information Density", "Implicit State", "Structural Depth"], correct: 0 },
-    { text: "Explain the primary bottleneck in a distributed database without consistent hashing.", options: ["Latency", "Write-Amplification", "Hotspots", "Garbage Collection"], correct: 2 }
-  ];
+  const startAssessment = async () => {
+    const role = localStorage.getItem("selectedRole");
+    if (!role) {
+      alert("⚠️ NO ROLE DETECTED: Please choose a specialized pathway in 'Trajectory Decode' first to initialize the diagnostic environment.");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const resp = await fetch(`${API_BASE}/api/ai/diagnostics`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role })
+      });
+      
+      if (!resp.ok) throw new Error("Failed to initialize diagnostics.");
+      
+      const data = await resp.json();
+      setQuestions(data.questions);
+      setTestActive(true);
+    } catch (err) {
+      console.error(err);
+      alert("Neural Link Synchronization Delayed: Please try initiating the diagnostic again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-
-
-  // Re-writing testActive / timer effect correctly
   useEffect(() => {
     let timer = null;
     if (testActive && timeRemaining > 0) {
@@ -30,19 +54,25 @@ const MockTest = () => {
     setTestActive(false);
     let correctCount = 0;
     questions.forEach((q, idx) => {
+      // AI returns actual string, so we need to match it or ensure indices match.
+      // Better to have indices from AI.
       if (answers[idx] === q.correct) correctCount++;
     });
     setScore(Math.round((correctCount / questions.length) * 100));
-    // Save to localStorage for historical records
+    
     const history = JSON.parse(localStorage.getItem("mock_test_history") || "[]");
-    history.push({ score: Math.round((correctCount / questions.length) * 100), date: new Date().toISOString() });
+    history.push({ 
+      score: Math.round((correctCount / questions.length) * 100), 
+      role: selectedRole,
+      date: new Date().toISOString() 
+    });
     localStorage.setItem("mock_test_history", JSON.stringify(history));
   };
 
   const getFeedback = (s) => {
-    if(s >= 80) return "MASTER ARCHITECT STATUS. PROCEED TO DEPLOYMENT.";
-    if(s >= 50) return "CORE KNOWLEDGE VALIDATED. REFINEMENT RECOMMENDED IN WEAK VECTORS.";
-    return "DIAGNOSTIC CRITICAL. RETURN TO PATHWAY ARCHIVES BEFORE NEXT SESSION.";
+    if(s >= 80) return "ELITE DEPTH VALIDATED. ARCHITECT STATUS ACHIEVED.";
+    if(s >= 50) return "CORE PROFICIENCY ESTABLISHED. TARGETED REFINEMENT REQUIRED.";
+    return "DIAGNOSTIC CRITICAL. RETURN TO FOUNDATIONAL MODULES.";
   };
 
   if(!testActive && score === null) {
@@ -51,10 +81,30 @@ const MockTest = () => {
         <header className="hero-box" style={{ padding: '160px 0 100px' }}>
            <span className="roadmap-label">AI DIAGNOSTIC ENGINES</span>
            <h1 className="hero-title">Mock Certification</h1>
-           <p className="hero-lead">Analyze your professional depth through a precision-engineered knowledge diagnostic.</p>
-           <button className="cta-glow" onClick={() => setTestActive(true)} style={{ padding: '20px 60px', borderRadius: '100px', fontSize: '1rem' }}>
-             INITIATE ASSESSMENT
-           </button>
+           <p className="hero-lead">Analyze your professional depth for <span style={{ color: '#fff' }}>{selectedRole || "Global Roles"}</span> through a precision-engineered diagnostic.</p>
+           
+           <AnimatePresence>
+             {loading ? (
+               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ padding: '20px' }}>
+                 <div className="lux-spinner" style={{ margin: '0 auto' }}></div>
+                 <p style={{ marginTop: '24px', opacity: 0.4, fontSize: '0.8rem', letterSpacing: '2px' }}>SYNTHESIZING QUESTIONS...</p>
+               </motion.div>
+             ) : (
+               <motion.button 
+                 whileHover={{ scale: 1.05 }}
+                 whileTap={{ scale: 0.95 }}
+                 className="cta-glow" 
+                 onClick={startAssessment} 
+                 style={{ padding: '20px 60px', borderRadius: '100px', fontSize: '1rem' }}
+               >
+                 INITIATE ASSESSMENT
+               </motion.button>
+             )}
+           </AnimatePresence>
+
+           {!selectedRole && (
+             <p style={{ marginTop: '24px', color: '#ff8a8a', fontSize: '0.8rem', fontWeight: 600 }}>⚠️ Assessment locked. Select a trajectory first.</p>
+           )}
         </header>
       </div>
     );
@@ -69,7 +119,7 @@ const MockTest = () => {
          </h2>
          <p className="hero-lead" style={{ fontSize: '1.25rem', color: '#fff' }}>{getFeedback(score)}</p>
          <button className="cta-glow" onClick={() => { setScore(null); setCurrentQ(0); setAnswers({}); setTimeRemaining(600); }} style={{ marginTop: '40px', padding: '16px 40px', borderRadius: '100px' }}>
-           RETRAIN MODULES
+            RE-INITIALIZE
          </button>
       </div>
     );
@@ -84,22 +134,24 @@ const MockTest = () => {
          </h3>
       </header>
 
-      <div className="glass-premium" style={{ padding: '60px 40px', textAlign: 'left' }}>
-         <p className="hero-lead" style={{ textAlign: 'left', margin: '0 0 40px 0', color: '#fff', fontSize: '1.4rem' }}>
-            {questions[currentQ].text}
-         </p>
-         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
-            {questions[currentQ].options.map((opt, i) => (
-               <div key={i} className="glass-premium" onClick={() => setAnswers({...answers, [currentQ]: i})} style={{ 
-                  padding: '24px 32px', cursor: 'pointer', transition: '0.2s',
-                  borderColor: answers[currentQ] === i ? '#4F46E5' : 'rgba(255,255,255,0.05)',
-                  background: answers[currentQ] === i ? 'rgba(79, 70, 229, 0.1)' : 'rgba(255,255,255,0.01)'
-               }}>
-                  <span style={{ fontSize: '1rem', color: '#888' }}>{opt}</span>
-               </div>
-            ))}
-         </div>
-      </div>
+      {questions[currentQ] && (
+        <div className="glass-premium" style={{ padding: '60px 40px', textAlign: 'left' }}>
+           <p className="hero-lead" style={{ textAlign: 'left', margin: '0 0 40px 0', color: '#fff', fontSize: '1.4rem' }}>
+              {questions[currentQ].text}
+           </p>
+           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+              {questions[currentQ].options.map((opt, i) => (
+                 <div key={i} className="glass-premium" onClick={() => setAnswers({...answers, [currentQ]: i})} style={{ 
+                    padding: '24px 32px', cursor: 'pointer', transition: '0.2s',
+                    borderColor: answers[currentQ] === i ? '#4F46E5' : 'rgba(255,255,255,0.05)',
+                    background: answers[currentQ] === i ? 'rgba(79, 70, 229, 0.1)' : 'rgba(255,255,255,0.01)'
+                 }}>
+                    <span style={{ fontSize: '1.1rem', color: answers[currentQ] === i ? '#fff' : '#888' }}>{opt}</span>
+                 </div>
+              ))}
+           </div>
+        </div>
+      )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', padding: '40px 0' }}>
          <button className="palette-btn" onClick={() => currentQ > 0 && setCurrentQ(currentQ - 1)} style={{ background: 'transparent' }}>PREVIOUS</button>

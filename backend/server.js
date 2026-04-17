@@ -12,6 +12,8 @@ const authRoutes = require("./routes/auth");
 const careerRoutes = require("./routes/career");
 const aiRoutes = require("./routes/ai");
 const aiCoachRoutes = require("./routes/aiRoutes");
+const resumeRoutes = require("./routes/resume");
+const aiMatchesRoutes = require("./routes/aiMatches");
 
 const app = express();
 
@@ -37,6 +39,8 @@ app.use("/career", careerRoutes); // /career/:title
 app.use("/careers", careerRoutes); // GET /careers to fetch all
 app.use("/ai-career", aiRoutes); // mapped to /ai-career
 app.use("/api/ai", aiCoachRoutes); // AI Chat Endpoint: /api/ai/chat
+app.use("/", resumeRoutes); // /analyze-resume
+app.use("/", aiMatchesRoutes); // /ai-matches and /ai-role-details
 
 app.post("/save-notes", async (req, res) => {
   try {

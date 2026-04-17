@@ -1,6 +1,7 @@
 import React from "react";
 import Timer from "../components/Timer";
 import Tracker from "../components/Tracker";
+import ResumeAnalyzer from "../components/ResumeAnalyzer";
 
 const Dashboard = () => {
   return (
@@ -21,7 +22,13 @@ const Dashboard = () => {
         </div>
         <Tracker />
       </section>
-      
+      <section className="resume-analyzer-section" style={{ marginBottom: '100px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '40px' }}>
+          <span className="roadmap-label">AI Analysis</span>
+        </div>
+        <ResumeAnalyzer />
+      </section>
+
       {/* Visual Separation */}
       <div style={{ padding: '80px 0', textAlign: 'center' }}>
         <span style={{ opacity: 0.1, letterSpacing: '4px' }}>⌘ DISCOVER BELOW ⌘</span>

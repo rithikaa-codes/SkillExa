@@ -3,12 +3,26 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const ReminderSystem = ({ triggerToast }) => {
   const [reminderTime, setReminderTime] = useState(localStorage.getItem("reminder_time") || "19:00");
-  const [isEnabled, setIsEnabled] = useState(localStorage.getItem("reminder_enabled") === "true");
-  const [permission, setPermission] = useState(Notification.permission);
+  const [isEnabled, setIsEnabled] = useState(localStorage.getItem("reminder_enabled") !== "false");
+  const [permission, setPermission] = useState(typeof Notification !== 'undefined' ? Notification.permission : 'denied');
 
   const requestPermission = async () => {
-    const res = await Notification.requestPermission();
-    setPermission(res);
+    if (typeof Notification === 'undefined') {
+      alert("Browser notifications are not supported here. We will use fallback alerts instead.");
+      return;
+    }
+    try {
+      const res = await Notification.requestPermission();
+      setPermission(res);
+      if (res === "denied") {
+         alert("Notifications are permanently blocked by your browser settings. You won't get push popups, but the protocol is now active!");
+      } else if (res === "granted") {
+         alert("Notifications successfully enabled!");
+      }
+    } catch (error) {
+      console.error("Notification permission error:", error);
+      alert("Error requesting notification permission. Running in fallback mode.");
+    }
   };
 
   const handleToggle = () => {
@@ -19,6 +33,12 @@ const ReminderSystem = ({ triggerToast }) => {
       requestPermission();
     }
   };
+
+  useEffect(() => {
+    if (isEnabled && permission === "default") {
+      requestPermission();
+    }
+  }, [isEnabled, permission]);
 
   const handleTimeChange = (e) => {
     const time = e.target.value;
@@ -39,11 +59,19 @@ const ReminderSystem = ({ triggerToast }) => {
         const today = now.toISOString().split("T")[0];
         
         if (lastNotified !== today) {
-          if (permission === "granted") {
-            new Notification("SkillExa: Focus Time", {
-              body: "It's time for your scheduled study session. Maintain your momentum!",
-              icon: "/favicon.ico"
-            });
+          if (permission === "granted" && typeof Notification !== 'undefined') {
+            try {
+              new Notification("SkillExa: Focus Time", {
+                body: "It's time for your scheduled study session. Maintain your momentum!",
+                icon: "/favicon.ico"
+              });
+            } catch (e) {
+              console.error("Failed to show notification:", e);
+              alert("SkillExa: Focus Time!\n\nIt's time for your scheduled study session. Maintain your momentum!");
+            }
+          } else {
+             // Fallback for blocked/unsupported environments
+             alert("SkillExa: Focus Time!\n\nIt's time for your scheduled study session. Maintain your momentum!");
           }
           if (triggerToast) triggerToast("FOCUS PROTOCOL: IT'S TIME TO STUDY");
           localStorage.setItem("last_notified_date", today);

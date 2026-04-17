@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AICoach from "../components/AICoach";
+import ResumeAnalyzer from "../components/ResumeAnalyzer";
 import { API_BASE } from "../api";
 
 
@@ -207,6 +208,9 @@ const CareerExplorer = () => {
               </div>
             </section>
           )}
+        <section style={{ padding: '0 64px 60px', maxWidth: '1200px', margin: '0 auto' }}>
+           <ResumeAnalyzer />
+        </section>
         <section style={{ padding: '0 64px 100px', maxWidth: '1200px', margin: '0 auto' }}>
            <AICoach />
         </section>

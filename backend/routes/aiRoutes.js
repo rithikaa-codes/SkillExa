@@ -19,7 +19,7 @@ router.post("/chat", async (req, res) => {
     const thanks = ["thank you", "thanks", "thx", "awesome", "ok", "okay", "nice", "got it"];
 
     if (greetings.includes(msgLower)) {
-      return res.json({ reply: "Hello! I am your SkillExa AI Career Architect. How can I help you build your future today? 😊" });
+      return res.json({ reply: "Hello! I am your SkillExa Cognitive Coach. How can I help you build your future today? 😊" });
     }
     if (thanks.includes(msgLower)) {
       return res.json({ reply: "You're very welcome! Let me know if you need any more career guidance. Build on! 🚀" });
@@ -32,19 +32,25 @@ router.post("/chat", async (req, res) => {
       });
     }
 
-    // 3. Connect to OpenAI (gpt-4o-mini)
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    // 3. Connect to Groq (llama-3.3-70b-versatile)
+    const client = new OpenAI({
+      apiKey: process.env.GROQ_API_KEY,
+      baseURL: "https://api.groq.com/openai/v1",
+    });
+
+    const response = await client.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
       messages: [
         {
           role: "system",
-          content: `You are an elite SkillExa AI Career Architect.
+          content: `You are an elite SkillExa Cognitive Coach.
                     - If the user says something casual (hi, hello, how are you, thank you, ok), respond naturally, briefly, and professionally like a human.
-                    - ONLY if the user asks for a career-related query (roadmap, skills, etc), provide the structured output:
+                    - Provide high-quality career advice for ANY field the user asks about (e.g., Fashion, Engineering, Medicine, etc.).
+                    - If the user asks for a career-related query (roadmap, skills, etc), provide the structured output:
                     1. Career Suggestion
-                    2. Required Skills (bullets)
-                    3. Step-by-Step Roadmap (numbered)
-                    4. Resources (optional).`
+                    2. Required Skills
+                    3. Step-by-Step Roadmap
+                    4. Resources.`
         },
         {
           role: "user",
@@ -60,32 +66,66 @@ router.post("/chat", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("AI Route Error:", error);
-
-    // FIX: Fallback to high-quality mock if quota is exceeded
-    if (error.status === 429 || error.message?.includes("insufficient_quota")) {
-      const fallbackReplies = {
-        "full stack": "1. Career Suggestion: Full Stack Developer\n\n2. Required Skills: \n- Frontend: React, Next.js, CSS/Tailwind\n- Backend: Node.js, Express, PostgreSQL/MongoDB\n- DevOps: Docker, CI/CD, AWS\n\n3. Step-by-Step Roadmap:\n- Step 1: Master semantic HTML and modern CSS flexbox/grid.\n- Step 2: Build deep expertise in Javascript/TypeScript and React.\n- Step 3: Architect robust server-side logic and database schemas with relational data.\n- Step 4: Deploy and scale applications using cloud infrastructure.\n\n4. Resources: MDN Web Docs, FreeCodeCamp, Roadmap.sh",
-        "ai": "1. Career Suggestion: Machine Learning Engineer\n\n2. Required Skills:\n- Mathematics: Linear Algebra, Calculus, Statistics\n- Programming: Python, C++\n- Frameworks: PyTorch, TensorFlow, Scikit-Learn\n\n3. Step-by-Step Roadmap:\n- Step 1: Build a strong foundation in statistics and linear algebra.\n- Step 2: Learn data manipulation with Pandas and NumPy.\n- Step 3: Implement core ML algorithms from scratch to understand internals.\n- Step 4: Specialize in Deep Learning, NLP, or Computer Vision.\n\n4. Resources: Coursera (Andrew Ng), Fast.ai, Kaggle",
-        "design": "1. Career Suggestion: UI/UX Designer + Creative Technologist\n\n2. Required Skills:\n- Design: Figma, Adobe Creative Suite\n- Coding: HTML/CSS, Framer Motion, GSAP\n- UX: User Research, Wireframing, Prototypes\n\n3. Step-by-Step Roadmap:\n- Step 1: Master UI design principles like typography and grid systems.\n- Step 2: Learn user-centric design research and prototyping in Figma.\n- Step 3: Bridge the gap with frontend code for micro-animations.\n- Step 4: Build a high-performance portfolio with creative interactions.\n\n4. Resources: Behance, Dribbble, component.gallery"
-      };
-
-      const msgLower = (req.body.message || "").toLowerCase();
-      let selectedReply = "1. Career Suggestion: Persistent Architectural Growth\n\n2. Required Skills: Continuous Learning, Adaptability, Core Technical Principles\n\n3. Step-by-Step Roadmap:\n- 1. Maintain current persistence metrics.\n- 2. Explore vocational engineering hubs.\n- 3. Build architectural depth in your niche.\n\n4. Resources: SkillExa Library, GitHub, StackOverflow";
-
-      if (msgLower.includes("full stack") || msgLower.includes("developer")) selectedReply = fallbackReplies["full stack"];
-      else if (msgLower.includes("ai") || msgLower.includes("machine learning")) selectedReply = fallbackReplies["ai"];
-      else if (msgLower.includes("design") || msgLower.includes("code")) selectedReply = fallbackReplies["design"];
-
-      return res.json({ 
-        reply: selectedReply + "\n\n(Note: SkillExa is currently running on Architectural Backup Mode due to high demand.)" 
-      });
-    }
-
-    res.status(500).json({ error: "AI temporarily unavailable" });
+    console.error("AI Coach Error:", error);
+    res.status(500).json({ error: "Cognitive Suite offline." });
   }
 });
 
+router.post("/diagnostics", async (req, res) => {
+  try {
+    const { role } = req.body;
+    if (!role) return res.status(400).json({ error: "Role required for diagnostic synthesis." });
 
+    const client = new OpenAI({
+      apiKey: process.env.GROQ_API_KEY,
+      baseURL: "https://api.groq.com/openai/v1",
+    });
+
+    const prompt = `Generate 5 challenging multiple-choice questions for a professional ${role} certification. 
+    Format MUST be a JSON object with exactly this structure:
+    { "questions": [ { "text": "...", "options": ["...", "...", "...", "..."], "correct": index_0_to_3 } ] }
+    Return ONLY the raw JSON.`;
+
+    console.log("Synthesizing questions for role:", role);
+
+    const response = await client.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        { 
+          role: "system", 
+          content: "You are an elite SkillExa Assessment Engine. Return ONLY a valid JSON object. No conversation, no markdown blocks." 
+        },
+        { role: "user", content: prompt }
+      ]
+    });
+
+    let content = response.choices[0].message.content.trim();
+    console.log("Raw AI Response received. Length:", content.length);
+    
+    // Cleanup markdown if present
+    if (content.startsWith("```")) {
+      content = content.replace(/^```json/, "").replace(/```$/, "").trim();
+    }
+    
+    try {
+      const data = JSON.parse(content);
+      console.log("Successfully parsed JSON diagnostics.");
+      res.json(data);
+    } catch (parseErr) {
+      console.error("JSON Parse Error:", parseErr, "Content Preview:", content.slice(0, 100));
+      // Return a high-quality fallback if AI fails to format
+      res.json({
+        questions: [
+          { text: `What is a primary responsibility of a ${role}?`, options: ["Operations", "Strategic Planning", "Technical Execution", "All of the above"], correct: 3 },
+          { text: `Which tool is most essential for a modern ${role}?`, options: ["Visual Studio Code", "Industry Standard Software", "Communication Platforms", "Data Analytics"], correct: 1 }
+        ]
+      });
+    }
+
+  } catch (error) {
+    console.error("Diagnostics Error:", error);
+    res.status(500).json({ error: "Diagnostic synthesis failed." });
+  }
+});
 
 module.exports = router;
